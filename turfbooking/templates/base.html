@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TurfZone | Elite Booking</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #050505; }
+        #combined-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: #050505; }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="text-gray-100 flex flex-col min-h-screen overflow-x-hidden selection:bg-green-500 selection:text-black">
+
+    <canvas id="combined-canvas"></canvas>
+
+    <nav x-data="{ mobileMenuOpen: false }" class="fixed w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/5 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                
+                <div class="flex items-center gap-4">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-gray-300 hover:text-white focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+
+                    <a href="{% url 'home' %}" class="flex items-center gap-2 group">
+                        <div class="w-8 h-8 bg-green-600 rounded-xl flex items-center justify-center transform group-hover:rotate-45 transition duration-300 shadow-[0_0_15px_rgba(34,197,94,0.5)]">
+                            <span class="font-bold text-black text-xl">T</span>
+                        </div>
+                        <span class="text-xl md:text-2xl font-bold tracking-wider text-white">TURF<span class="text-green-500">ZONE</span></span>
+                    </a>
+                </div>
+                    
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="{% url 'home' %}" class="text-xs font-bold text-gray-400 hover:text-white uppercase tracking-[0.15em] transition">Home</a>
+                    <a href="{% url 'explore' %}" class="text-xs font-bold text-gray-400 hover:text-white uppercase tracking-[0.15em] transition">Arenas</a>
+                    <a href="{% url 'about' %}" class="text-xs font-bold text-gray-400 hover:text-white uppercase tracking-[0.15em] transition">About</a>
+                    <a href="{% url 'contact' %}" class="text-xs font-bold text-gray-400 hover:text-white uppercase tracking-[0.15em] transition">Support</a>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    {% if user.is_authenticated %}
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open" @click.outside="open = false" class="flex items-center gap-2 text-xs font-bold text-gray-300 hover:text-white uppercase tracking-widest transition">
+                                <span class="hidden md:inline">{{ user.username }}</span>
+                                <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center md:hidden border border-gray-600">
+                                    <span class="text-green-500 text-xs">{{ user.username|make_list|first|upper }}</span>
+                                </div>
+                            </button>
+                            
+                            <div x-show="open" x-transition x-cloak class="absolute right-0 mt-4 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl py-2 z-50">
+                                <a href="{% url 'dashboard' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white">Dashboard</a>
+                                <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white">Settings</a>
+                                <div class="h-px bg-gray-700 my-2"></div>
+                                <form method="post" action="{% url 'logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800">Logout</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-xs font-bold text-gray-400 hover:text-white transition uppercase tracking-[0.2em]">Login</a>
+                        <a href="{% url 'signup' %}" class="hidden md:block bg-white text-black px-6 py-2.5 font-black text-xs tracking-widest uppercase hover:bg-green-500 hover:text-white transition rounded-full">
+                            Join Now
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div x-show="mobileMenuOpen" x-transition x-cloak class="md:hidden bg-gray-900 border-b border-gray-800">
+            <div class="px-4 pt-4 pb-6 space-y-4">
+                <a href="{% url 'home' %}" class="block text-gray-300 hover:text-green-400 font-bold uppercase tracking-widest">Home</a>
+                <a href="{% url 'explore' %}" class="block text-gray-300 hover:text-green-400 font-bold uppercase tracking-widest">Arenas</a>
+                <a href="{% url 'about' %}" class="block text-gray-300 hover:text-green-400 font-bold uppercase tracking-widest">About</a>
+                <a href="{% url 'contact' %}" class="block text-gray-300 hover:text-green-400 font-bold uppercase tracking-widest">Support</a>
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'signup' %}" class="block w-full text-center bg-green-600 text-white py-3 rounded-xl font-bold uppercase tracking-widest">Join Now</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="h-20"></div>
+
+    <main class="flex-grow container mx-auto px-4 py-8 relative z-10">
+        {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                    <div class="p-4 rounded-xl border-l-4 bg-gray-900/80 backdrop-blur-md {% if message.tags == 'success' %}border-green-500 text-green-200{% else %}border-red-500 text-red-200{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="relative z-10 border-t border-white/5 py-12 mt-auto bg-black text-center px-4">
+        <div class="flex flex-wrap justify-center gap-6 mb-8 text-xs font-bold text-gray-500 uppercase tracking-widest">
+            <a href="{% url 'home' %}" class="hover:text-white">Home</a>
+            <a href="{% url 'explore' %}" class="hover:text-white">Arenas</a>
+            <a href="{% url 'about' %}" class="hover:text-white">About</a>
+            <a href="{% url 'contact' %}" class="hover:text-white">Contact</a>
+            <a href="{% url 'privacy' %}" class="hover:text-white transition">Privacy Policy</a>
+        </div>
+        <p class="text-gray-700 text-xs tracking-[0.2em] uppercase">&copy; 2026 TurfZone.</p>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
+    <script>
+        AOS.init({ duration: 1000, once: true });
+        // Disable Tilt on Mobile for better performance/scrolling
+        if (window.innerWidth > 768) {
+            VanillaTilt.init(document.querySelectorAll(".tilt-card"), { max: 8, speed: 400, glare: true, "max-glare": 0.2, scale: 1.02 });
+        }
+
+        // Canvas Engine (Same as before)
+        const canvas = document.getElementById('combined-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        const mouse = { x: -500, y: -500 };
+        
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        resize();
+
+        class Star {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 1.5;
+                this.speed = Math.random() * 0.2 + 0.1;
+                this.opacity = Math.random() * 0.4 + 0.1;
+            }
+            update() {
+                this.y -= this.speed;
+                if (this.y < 0) this.reset();
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        const stars = [];
+        const starCount = window.innerWidth < 768 ? 20 : 50; // Fewer stars on mobile
+        for(let i=0; i<starCount; i++) stars.push(new Star());
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            stars.forEach(star => { star.update(); star.draw(); });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

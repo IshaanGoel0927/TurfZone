@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center mb-12" data-aos="fade-down">
+    <h1 class="text-4xl font-black text-white uppercase mb-4 tracking-tighter">Find Your <span class="text-green-500">Arena</span></h1>
+    
+    <form method="get" action="{% url 'explore' %}" class="max-w-xl mx-auto relative">
+        <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Search by name or location..." 
+               class="w-full bg-gray-900 border border-gray-700 text-white rounded-full py-4 px-8 pr-16 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition shadow-xl">
+        <button type="submit" class="absolute right-2 top-2 bottom-2 bg-green-600 text-white p-3 rounded-full hover:bg-green-500 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </button>
+    </form>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
+    {% for turf in turfs %}
+        <div class="tilt-card group relative bg-gray-900 border border-gray-800 hover:border-green-500/50 transition-all duration-300 overflow-hidden rounded-3xl" data-aos="fade-up">
+            <div class="h-64 relative overflow-hidden bg-gray-800">
+                {% if turf.image %}
+                    <img src="{{ turf.image.url }}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100">
+                {% else %}
+                    <div class="w-full h-full flex items-center justify-center opacity-30"><span class="text-gray-500 font-mono text-xs">NO IMAGE</span></div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                <div class="absolute top-4 right-4 bg-green-600 text-white text-xs font-bold px-4 py-2 uppercase tracking-wider shadow-lg rounded-full">₹{{ turf.price_per_hour }}/hr</div>
+            </div>
+            <div class="p-6 relative">
+                <h3 class="text-2xl font-bold text-white mb-2 uppercase">{{ turf.name }}</h3>
+                <p class="text-gray-400 text-sm mb-6 flex items-center font-mono"><span class="text-green-500 mr-2">>></span> {{ turf.location }}</p>
+                <a href="{% url 'book_turf' turf.id %}" class="block w-full border border-gray-600 text-gray-300 text-center py-3 text-sm font-bold uppercase tracking-widest hover:bg-green-600 hover:text-white hover:border-green-600 transition duration-300 rounded-xl">Book Slot</a>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-span-3 text-center py-20">
+            <p class="text-gray-500 text-xl">No arenas found matching specific criteria.</p>
+            <a href="{% url 'explore' %}" class="text-green-500 hover:underline mt-2 inline-block">View All</a>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

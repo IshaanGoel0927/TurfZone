@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+    <div class="w-full max-w-md p-10 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden" data-aos="zoom-in">
+        
+        <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
+        
+        <h2 class="text-4xl font-extrabold mb-2 text-center text-white tracking-tight">Welcome Back</h2>
+        <p class="text-center text-gray-400 mb-8 text-sm">Enter the arena.</p>
+        
+        <form method="post" class="space-y-6 relative z-10">
+            {% csrf_token %}
+            
+            <div class="group">
+                <label class="block text-xs font-bold text-green-500 uppercase tracking-widest mb-2 ml-1">Username</label>
+                <input type="text" name="username" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl text-white px-5 py-3 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all placeholder-gray-600" placeholder="Your ID" required>
+            </div>
+            
+            <div class="group">
+                <label class="block text-xs font-bold text-green-500 uppercase tracking-widest mb-2 ml-1">Password</label>
+                <input type="password" name="password" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl text-white px-5 py-3 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all placeholder-gray-600" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-4 rounded-xl transition duration-300 transform hover:scale-[1.02] shadow-lg shadow-green-900/40">
+                SIGN IN
+            </button>
+        </form>
+        
+        <div class="mt-8 text-center pt-6 border-t border-white/5">
+            <p class="text-sm text-gray-400">
+                New athlete? <a href="{% url 'signup' %}" class="text-green-400 hover:text-green-300 font-bold underline decoration-2 underline-offset-4">Create Account</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
