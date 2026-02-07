@@ -1,35 +1,169 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-lg mx-auto bg-gray-900/80 p-8 rounded-2xl border border-white/10 shadow-2xl mt-10 backdrop-blur-md" data-aos="zoom-in">
+<div class="max-w-lg mx-auto bg-gray-900/80 p-8 rounded-3xl border border-white/10 shadow-2xl mt-10 backdrop-blur-md" data-aos="zoom-in">
+    
     <div class="border-b border-white/10 pb-6 mb-6">
-        <h2 class="text-2xl font-bold text-white tracking-wide">Confirm Booking</h2>
-        <p class="text-gray-400 mt-2 tracking-wide">Venue: <span class="text-green-400 font-bold">{{ turf.name }}</span></p>
-        <p class="text-gray-500 text-sm mt-1">Rate: ₹{{ turf.price_per_hour }} / hr</p>
+        <h2 class="text-3xl font-black text-white tracking-tight uppercase">Confirm Booking</h2>
+        <div class="flex justify-between items-end mt-2">
+            <div>
+                <p class="text-gray-400 text-sm font-mono tracking-widest">VENUE</p>
+                <p class="text-green-500 font-bold text-lg">{{ turf.name }}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-gray-400 text-sm font-mono tracking-widest">RATE</p>
+                <p class="text-white font-bold">₹{{ turf.price_per_hour }}/hr</p>
+            </div>
+        </div>
     </div>
+
+    {% if form.errors %}
+        <div class="mb-6 bg-red-900/20 border border-red-500/50 rounded-xl p-4">
+            <p class="text-red-400 font-bold uppercase tracking-widest text-xs mb-2">Submission Error</p>
+            <ul class="list-disc list-inside text-sm text-red-200">
+                {% for field in form %}
+                    {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 
     <form method="post" class="space-y-6">
         {% csrf_token %}
         
         <div>
-            <label class="block text-xs font-bold text-green-500 uppercase tracking-widest mb-2">Select Date</label>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Select Date</label>
             {{ form.date }}
         </div>
         
         <div class="grid grid-cols-2 gap-4">
             <div>
-                <label class="block text-xs font-bold text-green-500 uppercase tracking-widest mb-2">Start Time</label>
-                {{ form.start_time }}
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Start Time</label>
+                <select name="start_time" id="id_start_time" class="w-full bg-gray-900 border border-gray-700 rounded-xl text-white px-4 py-3 focus:outline-none focus:border-green-500 transition">
+                    <option value="">-- Select Date First --</option>
+                </select>
             </div>
             <div>
-                <label class="block text-xs font-bold text-green-500 uppercase tracking-widest mb-2">End Time</label>
-                {{ form.end_time }}
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">End Time</label>
+                <select name="end_time" id="id_end_time" class="w-full bg-gray-900 border border-gray-700 rounded-xl text-white px-4 py-3 focus:outline-none focus:border-green-500 transition">
+                    <option value="">-- Select Start First --</option>
+                </select>
             </div>
         </div>
 
-        <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl transition shadow-[0_0_15px_rgba(34,197,94,0.4)] mt-4 tracking-widest">
-            PAY ₹{{ turf.price_per_hour }} & CONFIRM
+        <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition shadow-[0_0_20px_rgba(34,197,94,0.4)] mt-4 tracking-widest uppercase transform hover:-translate-y-1">
+            Proceed to Payment
         </button>
     </form>
 </div>
+
+{{ busy_data|json_script:"busy-data" }}
+
+    <script>
+    const busySlots = JSON.parse(document.getElementById('busy-data').textContent);
+    const dateInput = document.getElementById('id_date');
+    const startSelect = document.getElementById('id_start_time');
+    const endSelect = document.getElementById('id_end_time');
+
+    // CONFIGURATION: Change this to 1 if you really want every single minute
+    const TIME_STEP = 15; 
+
+    // 1. Helper: Convert "HH:MM" to Minutes
+    function toMinutes(timeStr) {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    // 2. Helper: Convert Minutes to "HH:MM"
+    function toTimeStr(totalMinutes) {
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    // 3. Helper: Check Overlaps
+    function isSlotBusy(dateStr, startMin, endMin) {
+        for (let slot of busySlots) {
+            if (slot.date === dateStr) {
+                const busyStart = toMinutes(slot.start_time);
+                const busyEnd = toMinutes(slot.end_time);
+                // Overlap logic
+                if (startMin < busyEnd && endMin > busyStart) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // 4. Generate Start Times (Every 15 Minutes)
+    function populateStartTimes() {
+        startSelect.innerHTML = '<option value="">-- Select Time --</option>';
+        endSelect.innerHTML = '<option value="">-- Select Start First --</option>';
+        
+        const selectedDate = dateInput.value;
+        if (!selectedDate) return;
+
+        const now = new Date();
+        const isToday = (selectedDate === now.toISOString().split('T')[0]);
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        // Start from 6:00 AM (360 min) to 11:00 PM (1380 min)
+        for (let t = 360; t <= 1380; t += TIME_STEP) {
+            
+            // Rule 1: If today, block past time (+15 min buffer)
+            if (isToday && t < (currentMinutes + 15)) continue;
+
+            // Rule 2: Check availability (assume 15 min minimum slot to check)
+            if (isSlotBusy(selectedDate, t, t + TIME_STEP)) continue;
+
+            let timeStr = toTimeStr(t);
+            let option = document.createElement('option');
+            option.value = timeStr;
+            option.text = timeStr;
+            startSelect.add(option);
+        }
+    }
+
+    // 5. Generate End Times
+    function populateEndTimes() {
+        endSelect.innerHTML = '<option value="">-- Select End --</option>';
+        const startVal = startSelect.value;
+        if (!startVal) return;
+
+        const startMin = toMinutes(startVal);
+        const selectedDate = dateInput.value;
+
+        // Allow booking from 1 Hour (60 mins) up to 4 Hours
+        // Step by TIME_STEP (15 mins)
+        for (let duration = 60; duration <= 240; duration += TIME_STEP) {
+            let endMin = startMin + duration;
+            
+            if (endMin > 1440) break; // Midnight limit
+
+            // Stop if we hit a busy slot
+            if (isSlotBusy(selectedDate, startMin, endMin)) break;
+
+            let timeStr = toTimeStr(endMin);
+            
+            // Format nice label: "09:15 (1 hr 15 mins)"
+            let hrs = Math.floor(duration / 60);
+            let mins = duration % 60;
+            let label = `${timeStr} (${hrs}h ${mins > 0 ? mins + 'm' : ''})`;
+
+            let option = document.createElement('option');
+            option.value = timeStr;
+            option.text = label;
+            endSelect.add(option);
+        }
+    }
+
+    // Initialize
+    const todayStr = new Date().toISOString().split('T')[0];
+    dateInput.setAttribute('min', todayStr);
+    
+    dateInput.addEventListener('change', populateStartTimes);
+    startSelect.addEventListener('change', populateEndTimes);
+</script>
 {% endblock %}

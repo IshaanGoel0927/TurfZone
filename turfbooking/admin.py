@@ -29,3 +29,10 @@ class BookingAdmin(admin.ModelAdmin):
 
 admin.site.register(Turf, TurfAdmin)
 admin.site.register(Booking, BookingAdmin)
+from .models import Turf, Booking, ContactMessage
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'sent_at')
+    search_fields = ('name', 'email', 'message')
+    readonly_fields = ('sent_at',)

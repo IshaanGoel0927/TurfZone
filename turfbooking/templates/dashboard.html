@@ -1,37 +1,102 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <h2 class="text-3xl font-bold text-white mb-8">My Bookings</h2>
-
-    {% if bookings %}
-        <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
-            <table class="w-full text-left text-gray-300">
-                <thead class="bg-gray-900 text-gray-400 uppercase text-xs">
-                    <tr>
-                        <th class="px-6 py-4">Turf</th>
-                        <th class="px-6 py-4">Date</th>
-                        <th class="px-6 py-4">Time</th>
-                        <th class="px-6 py-4">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-700">
-                    {% for booking in bookings %}
-                    <tr class="hover:bg-gray-700/50 transition">
-                        <td class="px-6 py-4 font-medium text-white">{{ booking.turf.name }}</td>
-                        <td class="px-6 py-4">{{ booking.date }}</td>
-                        <td class="px-6 py-4">{{ booking.start_time }} - {{ booking.end_time }}</td>
-                        <td class="px-6 py-4"><span class="bg-green-900 text-green-300 px-2 py-1 rounded text-xs">Confirmed</span></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="text-center py-20 bg-gray-800 rounded-2xl border border-gray-700">
-            <p class="text-gray-400 text-lg">You haven't booked any games yet.</p>
-            <a href="{% url 'home' %}" class="mt-4 inline-block text-green-500 hover:text-green-400">Find a Turf &rarr;</a>
+<div class="min-h-screen bg-black p-4 md:p-8">
+    
+    {% if messages %}
+        <div class="max-w-4xl mx-auto mb-6" data-aos="fade-down">
+            {% for message in messages %}
+                <div class="p-4 rounded-xl border {% if message.tags == 'success' %}bg-green-900/30 border-green-500/50 text-green-300{% elif message.tags == 'warning' %}bg-yellow-900/30 border-yellow-500/50 text-yellow-300{% else %}bg-red-900/30 border-red-500/50 text-red-300{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p class="font-bold text-sm">{{ message }}</p>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
     {% endif %}
+
+    <div class="max-w-4xl mx-auto mb-8 flex justify-between items-end">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter">
+                My <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">Dugout</span>
+            </h1>
+            <p class="text-gray-400 text-sm mt-1">Manage your upcoming fixtures</p>
+        </div>
+        <a href="{% url 'home' %}" class="text-xs font-bold text-green-500 hover:text-white transition uppercase tracking-widest">
+            + Book New Slot
+        </a>
+    </div>
+
+    <div class="max-w-4xl mx-auto space-y-4">
+        {% if bookings %}
+            {% for booking in bookings %}
+            <div class="group relative bg-gray-900 border border-gray-800 rounded-2xl p-6 transition hover:border-gray-700" data-aos="fade-up" data-aos-delay="{{ forloop.counter0 }}00">
+                
+                <div class="absolute top-6 right-6">
+                    {% if booking.status == 'CONFIRMED' %}
+                        <span class="bg-green-500/20 text-green-400 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider border border-green-500/20">
+                            Confirmed
+                        </span>
+                    {% elif booking.status == 'PENDING' %}
+                        <span class="bg-yellow-500/20 text-yellow-400 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider border border-yellow-500/20">
+                            Pending
+                        </span>
+                    {% else %}
+                        <span class="bg-red-500/20 text-red-400 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider border border-red-500/20">
+                            Cancelled
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="flex-shrink-0 bg-black rounded-xl p-4 text-center border border-gray-800 w-full md:w-24">
+                        <span class="block text-2xl font-black text-white">{{ booking.date|date:"d" }}</span>
+                        <span class="block text-xs font-bold text-gray-500 uppercase">{{ booking.date|date:"M" }}</span>
+                    </div>
+
+                    <div class="flex-grow">
+                        <h3 class="text-xl font-bold text-white mb-1">{{ booking.turf.name }}</h3>
+                        <p class="text-gray-400 text-sm mb-4">{{ booking.start_time }} - {{ booking.end_time }}</p>
+                        
+                        <div class="flex flex-wrap items-center gap-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                            <span class="flex items-center gap-1">
+                                ₹{{ booking.total_price }}
+                            </span>
+                            
+                            {% if booking.status == 'CANCELLED' %}
+                                <span class="text-red-500 flex items-center gap-1 border-l border-gray-800 pl-4">
+                                    Refund: ₹{{ booking.refund_amount }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        {% if booking.status != 'CANCELLED' %}
+                            <a href="{% url 'cancel_booking' booking.id %}" 
+                               onclick="return confirm('Wait! Cancellation Policy:\n\n• < 1 Hour after booking: 100% Refund\n• > 24 Hours before game: 100% Refund\n• 4-24 Hours before game: 50% Refund\n• < 4 Hours: No Refund\n\nAre you sure you want to cancel?')"
+                               class="w-full md:w-auto text-center bg-red-900/10 hover:bg-red-900/30 text-red-500 border border-red-900/30 hover:border-red-500 font-bold text-xs uppercase tracking-widest px-6 py-3 rounded-xl transition">
+                                Cancel Slot
+                            </a>
+                        {% else %}
+                             <button disabled class="cursor-not-allowed opacity-50 text-gray-600 font-bold text-xs uppercase tracking-widest px-6 py-3 border border-gray-800 rounded-xl">
+                                Void
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        
+        {% else %}
+            <div class="text-center py-20 bg-gray-900/50 rounded-3xl border border-dashed border-gray-800">
+                <p class="text-gray-500 mb-4">You haven't booked any games yet.</p>
+                <a href="{% url 'home' %}" class="inline-block bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg shadow-green-900/20 uppercase tracking-widest text-sm">
+                    Find a Turf
+                </a>
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
